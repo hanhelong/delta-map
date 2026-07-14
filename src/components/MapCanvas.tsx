@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import type { MapData, Marker, Mode } from '@/types';
+import type { MapData, Marker, Mode, Skin } from '@/types';
 import { MarkerPoint } from './MarkerPoint';
 import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 
@@ -7,13 +7,14 @@ interface MapCanvasProps {
   mapData: MapData | null;
   markers: Marker[];
   mode: Mode;
+  skin: Skin;
   onMarkerClick: (marker: Marker) => void;
   onMapClick: (x: number, y: number) => void;
   isMobile?: boolean;
   onTap?: () => void;
 }
 
-export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, isMobile = false, onTap }: MapCanvasProps) {
+export function MapCanvas({ mapData, markers, mode, skin, onMarkerClick, onMapClick, isMobile = false, onTap }: MapCanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -243,8 +244,12 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
 
   if (!mapData) {
     return (
-      <div className={`flex-1 flex items-center justify-center bg-military-900 border-2 border-dashed border-military-600 ${isMobile ? 'rounded-none' : 'rounded-lg'}`}>
-        <div className="text-center text-military-500 px-4">
+      <div className={`flex-1 flex items-center justify-center border-2 border-dashed transition-all duration-500 ${
+        skin === 'skin2' 
+          ? 'bg-[#0a0a0f] border-[#1a1a2e]' 
+          : 'bg-military-900 border-military-600'
+      } ${isMobile ? 'rounded-none' : 'rounded-lg'}`}>
+        <div className={`text-center px-4 transition-all duration-500 ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-500'}`}>
           <p className={`${isMobile ? 'text-base' : 'text-lg'}`}>暂无地图</p>
           <p className={`${isMobile ? 'text-xs' : 'text-sm'} mt-2`}>请上传地图图片</p>
         </div>
@@ -255,19 +260,31 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
   return (
     <div className="flex-1 flex flex-col min-h-0">
       {!isMobile && (
-        <div className="flex items-center justify-between px-4 py-2 bg-military-800 border-b border-military-700 flex-shrink-0">
+        <div className={`flex items-center justify-between px-4 py-2 flex-shrink-0 transition-all duration-500 ${
+          skin === 'skin2' 
+            ? 'bg-[#12121a]/80 border-[#1a1a2e]' 
+            : 'bg-military-800 border-military-700'
+        } border-b backdrop-blur-xl`}>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-military-500">缩放: {Math.round(scale * 100)}%</span>
+            <span className={`text-sm transition-all duration-500 ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-500'}`}>缩放: {Math.round(scale * 100)}%</span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => zoomBy(0.8)}
-                className="px-2 py-1 text-sm bg-military-700 hover:bg-military-600 rounded transition-colors"
+                className={`px-2 py-1 text-sm rounded transition-all duration-300 ${
+                  skin === 'skin2' 
+                    ? 'bg-[#1a1a2e]/50 text-[#8888aa] hover:bg-[#1a1a2e]' 
+                    : 'bg-military-700 hover:bg-military-600'
+                }`}
               >
                 -
               </button>
               <button
                 onClick={() => zoomBy(1.25)}
-                className="px-2 py-1 text-sm bg-military-700 hover:bg-military-600 rounded transition-colors"
+                className={`px-2 py-1 text-sm rounded transition-all duration-300 ${
+                  skin === 'skin2' 
+                    ? 'bg-[#1a1a2e]/50 text-[#8888aa] hover:bg-[#1a1a2e]' 
+                    : 'bg-military-700 hover:bg-military-600'
+                }`}
               >
                 +
               </button>
@@ -275,7 +292,11 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
           </div>
           <button
             onClick={resetView}
-            className="px-3 py-1 text-sm bg-military-700 hover:bg-military-600 rounded transition-colors"
+            className={`px-3 py-1 text-sm rounded transition-all duration-300 ${
+              skin === 'skin2' 
+                ? 'bg-[#1a1a2e]/50 text-[#8888aa] hover:bg-[#1a1a2e]' 
+                : 'bg-military-700 hover:bg-military-600'
+            }`}
           >
             重置视图
           </button>
@@ -283,7 +304,9 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
       )}
       <div
         ref={containerRef}
-        className={`flex-1 overflow-hidden bg-military-900 relative min-h-0 ${scale > minScale ? 'cursor-grab active:cursor-grabbing' : mode === 'edit' ? 'cursor-crosshair' : 'cursor-default'}`}
+        className={`flex-1 overflow-hidden relative min-h-0 transition-all duration-500 ${
+          skin === 'skin2' ? 'bg-[#0a0a0f] skin2-grid-bg' : 'bg-military-900'
+        } ${scale > minScale ? 'cursor-grab active:cursor-grabbing' : mode === 'edit' ? 'cursor-crosshair' : 'cursor-default'}`}
         onWheel={handleWheel}
         onMouseDown={handleMouseDown}
         onClick={handleCanvasClick}
@@ -313,6 +336,7 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
                 marker={marker}
                 onClick={() => onMarkerClick(marker)}
                 isEditMode={mode === 'edit'}
+                skin={skin}
               />
             ))}
           </div>
@@ -324,29 +348,47 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
             onClick={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
           >
-            <div className="bg-military-800/95 border border-military-600 rounded-lg px-3 py-2 shadow-lg">
+            <div className={`rounded-lg px-3 py-2 shadow-lg backdrop-blur-xl transition-all duration-500 ${
+              skin === 'skin2' 
+                ? 'bg-[#12121a]/95 border border-[#1a1a2e]' 
+                : 'bg-military-800/95 border border-military-600'
+            }`}>
               <div className="flex items-center gap-2 mb-2">
                 <button
                   onClick={(e) => { e.stopPropagation(); zoomBy(0.8); }}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="w-9 h-9 bg-military-700 hover:bg-military-600 border border-military-600 rounded flex items-center justify-center text-military-300 active:scale-95 transition-transform"
+                  className={`w-9 h-9 border rounded flex items-center justify-center active:scale-95 transition-all duration-300 ${
+                    skin === 'skin2' 
+                      ? 'bg-[#1a1a2e]/50 border-[#1a1a2e] text-[#8888aa] hover:bg-[#1a1a2e]' 
+                      : 'bg-military-700 border-military-600 text-military-300 hover:bg-military-600'
+                  }`}
                 >
                   <ZoomOut className="w-4 h-4" />
                 </button>
-                <span className="text-xs text-military-300 font-mono min-w-[48px] text-center">
+                <span className={`text-xs font-mono min-w-[48px] text-center transition-all duration-500 ${
+                  skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-300'
+                }`}>
                   {Math.round(scale * 100)}%
                 </span>
                 <button
                   onClick={(e) => { e.stopPropagation(); zoomBy(1.25); }}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="w-9 h-9 bg-military-700 hover:bg-military-600 border border-military-600 rounded flex items-center justify-center text-military-300 active:scale-95 transition-transform"
+                  className={`w-9 h-9 border rounded flex items-center justify-center active:scale-95 transition-all duration-300 ${
+                    skin === 'skin2' 
+                      ? 'bg-[#1a1a2e]/50 border-[#1a1a2e] text-[#8888aa] hover:bg-[#1a1a2e]' 
+                      : 'bg-military-700 border-military-600 text-military-300 hover:bg-military-600'
+                  }`}
                 >
                   <ZoomIn className="w-4 h-4" />
                 </button>
                 <button
                   onClick={(e) => { e.stopPropagation(); resetView(); }}
                   onTouchStart={(e) => e.stopPropagation()}
-                  className="w-9 h-9 bg-military-700 hover:bg-military-600 border border-military-600 rounded flex items-center justify-center text-military-300 active:scale-95 transition-transform"
+                  className={`w-9 h-9 border rounded flex items-center justify-center active:scale-95 transition-all duration-300 ${
+                    skin === 'skin2' 
+                      ? 'bg-[#1a1a2e]/50 border-[#1a1a2e] text-[#8888aa] hover:bg-[#1a1a2e]' 
+                      : 'bg-military-700 border-military-600 text-military-300 hover:bg-military-600'
+                  }`}
                 >
                   <Maximize2 className="w-4 h-4" />
                 </button>
@@ -360,9 +402,13 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
                 onChange={(e) => setZoom(parseFloat(e.target.value))}
                 onClick={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
-                className="w-full h-2 bg-military-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                className={`w-full h-2 rounded-lg appearance-none cursor-pointer transition-all duration-500 ${
+                  skin === 'skin2' ? 'accent-[#00f5ff]' : 'accent-blue-500'
+                }`}
                 style={{
-                  background: `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((scale - minScale) / (5 - minScale)) * 100}%, #374151 ${((scale - minScale) / (5 - minScale)) * 100}%, #374151 100%)`
+                  background: skin === 'skin2'
+                    ? `linear-gradient(to right, #00f5ff 0%, #00f5ff ${((scale - minScale) / (5 - minScale)) * 100}%, #1a1a2e ${((scale - minScale) / (5 - minScale)) * 100}%, #1a1a2e 100%)`
+                    : `linear-gradient(to right, #3b82f6 0%, #3b82f6 ${((scale - minScale) / (5 - minScale)) * 100}%, #374151 ${((scale - minScale) / (5 - minScale)) * 100}%, #374151 100%)`
                 }}
               />
             </div>
@@ -370,18 +416,24 @@ export function MapCanvas({ mapData, markers, mode, onMarkerClick, onMapClick, i
         )}
         
         {mode === 'edit' && (
-          <div className={`absolute ${isMobile ? 'top-2 left-2' : 'top-4 left-4'} bg-military-800/90 text-xs text-military-400 px-3 py-2 rounded border border-military-600 z-30 pointer-events-none`}>
-            {isMobile ? (
-              <>
-                <p>双击添加标记</p>
-                <p className="mt-1">单指拖动移动</p>
-              </>
-            ) : (
-              <>
-                <p>点击添加标记 | 滚轮缩放</p>
-                <p className="mt-1">按住左键拖动移动</p>
-              </>
-            )}
+          <div className={`absolute ${isMobile ? 'top-2 left-2' : 'top-4 left-4'} px-3 py-2 rounded border z-30 pointer-events-none backdrop-blur-xl transition-all duration-500 ${
+            skin === 'skin2' 
+              ? 'bg-[#12121a]/90 border-[#1a1a2e]' 
+              : 'bg-military-800/90 border-military-600'
+          }`}>
+            <div className={`text-xs transition-all duration-500 ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'}`}>
+              {isMobile ? (
+                <>
+                  <p>双击添加标记</p>
+                  <p className="mt-1">单指拖动移动</p>
+                </>
+              ) : (
+                <>
+                  <p>点击添加标记 | 滚轮缩放</p>
+                  <p className="mt-1">按住左键拖动移动</p>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>

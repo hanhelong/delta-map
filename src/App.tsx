@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
-import type { MapData, Marker, Mode, GalleryImage } from '@/types';
+import type { MapData, Marker, Mode, GalleryImage, Skin } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { Toolbar } from '@/components/Toolbar';
 import { MapCanvas } from '@/components/MapCanvas';
@@ -20,6 +20,7 @@ function MapApp() {
   const [currentMapId, setCurrentMapId] = useLocalStorage<string | null>('deltaCurrentMapId', null);
   const [markers, setMarkers] = useLocalStorage<Marker[]>('deltaMarkers', []);
   const [galleryImages, setGalleryImages] = useLocalStorage<GalleryImage[]>('deltaGallery', []);
+  const [skin, setSkin] = useLocalStorage<Skin>('deltaSkin', 'skin1');
 
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [showAddMarkerModal, setShowAddMarkerModal] = useState(false);
@@ -49,8 +50,16 @@ function MapApp() {
     if (!currentMap) setMode('view');
   }, [currentMap]);
 
+  useEffect(() => {
+    document.documentElement.className = skin;
+  }, [skin]);
+
   const handleModeChange = (newMode: Mode) => {
     setMode(newMode);
+  };
+
+  const handleSkinChange = (newSkin: Skin) => {
+    setSkin(newSkin);
   };
 
   const handleUploadMap = (name: string, imageBase64: string, width: number, height: number) => {
@@ -195,28 +204,26 @@ function MapApp() {
   const handleClearCache = () => setShowCacheConfirm(true);
 
   const confirmClearCache = async () => {
-    // 清除 localStorage
     localStorage.clear();
     
-    // 清除 Service Worker 缓存
     if ('caches' in window) {
       const cacheNames = await caches.keys();
       await Promise.all(cacheNames.map(name => caches.delete(name)));
     }
     
-    // 清除 sessionStorage
     sessionStorage.clear();
     
-    // 刷新页面
     window.location.reload();
   };
 
   return (
-    <div className={`h-screen bg-military-900 ${isMobile ? 'fixed inset-0 overflow-hidden flex flex-col' : 'flex flex-row'}`}>
+    <div className={`h-screen ${isMobile ? 'fixed inset-0 overflow-hidden flex flex-col' : 'flex flex-row'} ${skin === 'skin2' ? 'skin2-gradient-bg skin2-grid-bg' : ''}`}>
       {!isMobile && (
         <Toolbar
           mode={mode}
+          skin={skin}
           onModeChange={handleModeChange}
+          onSkinChange={handleSkinChange}
           onUploadMap={() => setShowUploadModal(true)}
           onExportData={handleExportData}
           onImportData={handleImportData}
@@ -234,23 +241,23 @@ function MapApp() {
 
       <div className="flex-1 flex flex-col min-w-0">
         {!isMobile && (
-          <header className="bg-military-800 border-b border-military-700 px-4 py-3 flex-shrink-0">
+          <header className={`${skin === 'skin2' ? 'bg-[#12121a]/80 border-[#1a1a2e]' : 'bg-military-800 border-military-700'} border-b px-4 py-3 flex-shrink-0 backdrop-blur-xl ${skin === 'skin2' ? 'skin2-border-glow' : ''}`}>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <span className="text-sm text-military-400">
+                <span className={`text-sm ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'}`}>
                   当前模式:{' '}
-                  <span className={mode === 'view' ? 'text-green-400' : 'text-orange-400'}>
+                  <span className={mode === 'view' ? (skin === 'skin2' ? 'text-[#00ff88]' : 'text-green-400') : (skin === 'skin2' ? 'text-[#ffaa00]' : 'text-orange-400')}>
                     {mode === 'view' ? '观看模式' : '编辑模式'}
                   </span>
                 </span>
                 {currentMap && (
-                  <span className="text-sm text-military-400">
+                  <span className={`text-sm ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'}`}>
                     地图: <span className="text-white">{currentMap.name}</span>
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-xs text-military-500">
+                <span className={`text-xs ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-500'}`}>
                   刷红: {currentMarkers.filter(m => m.type === 'red').length} | 刷卡: {currentMarkers.filter(m => m.type === 'card').length}
                 </span>
               </div>
@@ -258,11 +265,12 @@ function MapApp() {
           </header>
         )}
 
-        <main className={`flex-1 min-h-0 flex flex-col ${!isMobile ? 'p-4' : 'p-0'}`}>
+        <main className={`flex-1 min-h-0 flex flex-col ${!isMobile ? 'p-4' : 'p-0'} ${skin === 'skin2' ? 'skin2-grid-bg' : ''}`}>
           <MapCanvas
             mapData={currentMap}
             markers={currentMarkers}
             mode={mode}
+            skin={skin}
             onMarkerClick={handleMarkerClick}
             onMapClick={handleMapClick}
             isMobile={isMobile}
@@ -274,7 +282,9 @@ function MapApp() {
       {isMobile && (
         <Toolbar
           mode={mode}
+          skin={skin}
           onModeChange={handleModeChange}
+          onSkinChange={handleSkinChange}
           onUploadMap={() => setShowUploadModal(true)}
           onExportData={handleExportData}
           onImportData={handleImportData}
@@ -294,11 +304,12 @@ function MapApp() {
       )}
 
       {showUploadModal && (
-        <UploadModal onClose={() => setShowUploadModal(false)} onUpload={handleUploadMap} />
+        <UploadModal skin={skin} onClose={() => setShowUploadModal(false)} onUpload={handleUploadMap} />
       )}
 
       {showAddMarkerModal && (
         <AddMarkerModal
+          skin={skin}
           x={addMarkerPosition.x} y={addMarkerPosition.y}
           onClose={() => { setShowAddMarkerModal(false); setEditingMarker(null); }}
           onSave={handleAddMarker} editMarker={editingMarker}
@@ -308,6 +319,7 @@ function MapApp() {
 
       {showMarkerPopup && selectedMarker && (
         <MarkerPopup
+          skin={skin}
           marker={selectedMarker}
           onClose={() => { setShowMarkerPopup(false); setSelectedMarker(null); }}
           onEdit={() => {
@@ -323,6 +335,7 @@ function MapApp() {
 
       {showImageGallery && (
         <ImageGallery
+          skin={skin}
           images={galleryImages}
           onClose={() => { setShowImageGallery(false); setGallerySelectMode(false); setGallerySelectCallback(null); }}
           onUpload={handleUploadToGallery} onDelete={handleDeleteGalleryImage}
@@ -331,6 +344,7 @@ function MapApp() {
       )}
 
       <ConfirmModal
+        skin={skin}
         isOpen={showClearConfirm} title="确认清空数据"
         message="确定要清空所有数据吗？这将删除所有地图、点位标记和图片仓库中的图片，此操作不可恢复！"
         confirmText="确认清空" cancelText="取消" danger={true}
@@ -338,6 +352,7 @@ function MapApp() {
       />
 
       <ConfirmModal
+        skin={skin}
         isOpen={showCacheConfirm} title="确认清除缓存"
         message="确定要清除浏览器缓存吗？这将清除所有本地存储数据、Service Worker缓存，并刷新页面，此操作不可恢复！"
         confirmText="确认清除" cancelText="取消" danger={true}

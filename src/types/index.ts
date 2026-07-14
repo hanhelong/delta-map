@@ -31,3 +31,5 @@ export interface GalleryImage {
 }
 
 export type Mode = 'view' | 'edit';
+
+export type Skin = 'skin1' | 'skin2';
