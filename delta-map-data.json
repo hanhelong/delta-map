@@ -1,0 +1,33 @@
+{
+  "maps": [],
+  "markers": [
+    {
+      "id": "t6c581dq9tkcbuyxcvajp",
+      "mapId": "d9n0ur056ueq7x9xkn531",
+      "type": "card",
+      "name": "二楼桌子上",
+      "x": 70.0625226649428,
+      "y": 39.83724012126634,
+      "imageBase64": "",
+      "iconImage": "",
+      "iconSize": 80,
+      "description": "",
+      "createdAt": 1783999601838
+    },
+    {
+      "id": "24upll5v9otdc2i5x1x57h",
+      "mapId": "aoov8512ftixt9zlk9trm",
+      "type": "red",
+      "name": "",
+      "x": 35.17555266579974,
+      "y": 27.665799739921976,
+      "imageBase64": "",
+      "iconImage": "",
+      "iconSize": 40,
+      "description": "",
+      "createdAt": 1784008769982
+    }
+  ],
+  "gallery": [],
+  "updatedAt": 1784009586852
+}
