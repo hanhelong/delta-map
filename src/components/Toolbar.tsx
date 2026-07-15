@@ -1,19 +1,6 @@
-import { Eye, Edit3, Upload, Map, Download, Upload as UploadIcon, Trash2, Menu, X, ChevronUp, ChevronDown, Images, RefreshCw, Palette, ChevronRight, Plus, icons } from 'lucide-react';
+import { Eye, Edit3, Upload, Map, Download, Upload as UploadIcon, Trash2, Menu, X, ChevronUp, ChevronDown, Images, RefreshCw, Palette, ChevronRight } from 'lucide-react';
 import type { MapData, Mode, Marker, MarkerType, Skin } from '@/types';
 import { useState } from 'react';
-
-const AVAILABLE_ICONS = [
-  'Skull', 'Key', 'MapPin', 'Flag', 'Star', 'Heart', 'Shield', 'Sword',
-  'Target', 'Crosshair', 'AlertTriangle', 'Info', 'Home', 'Anchor',
-  'Zap', 'Flame', 'Snowflake', 'Cloud', 'Sun', 'Moon',
-  'Circle', 'Square', 'Triangle', 'Diamond', 'Hexagon',
-  'User', 'Users', 'Bot', 'Ghost', 'Cat',
-  'Car', 'Plane', 'Ship', 'Train', 'Rocket',
-  'TreePine', 'Mountain', 'Building', 'Castle', 'Church',
-  'Briefcase', 'ShoppingCart', 'Coffee', 'Utensils', 'Beer',
-  'Music', 'Camera', 'Gamepad2', 'Dices', 'Puzzle',
-  'Wrench', 'Hammer', 'Pickaxe', 'Shovel', 'Axe',
-];
 
 interface ToolbarProps {
   mode: Mode;
@@ -27,8 +14,6 @@ interface ToolbarProps {
   onOpenGallery: () => void;
   onClearData: () => void;
   onClearCache: () => void;
-  onAddMarkerType?: (name: string, color: string, icon: string) => void;
-  onDeleteMarkerType?: (typeId: string) => void;
   maps: MapData[];
   currentMapId: string | null;
   onSwitchMap: (mapId: string) => void;
@@ -40,42 +25,11 @@ interface ToolbarProps {
   onShow?: () => void;
 }
 
-export function Toolbar({ mode, skin, markerTypes, onModeChange, onSkinChange, onUploadMap, onExportData, onImportData, onOpenGallery, onClearData, onClearCache, onAddMarkerType, onDeleteMarkerType, maps, currentMapId, onSwitchMap, onDeleteMap, markers, isMobile = false, show = true, onHide, onShow }: ToolbarProps) {
+export function Toolbar({ mode, skin, markerTypes, onModeChange, onSkinChange, onUploadMap, onExportData, onImportData, onOpenGallery, onClearData, onClearCache, maps, currentMapId, onSwitchMap, onDeleteMap, markers, isMobile = false, show = true, onHide, onShow }: ToolbarProps) {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showSkinDropdown, setShowSkinDropdown] = useState(false);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [showAddType, setShowAddType] = useState(false);
-  const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeColor, setNewTypeColor] = useState('#3b82f6');
-  const [newTypeIcon, setNewTypeIcon] = useState('MapPin');
-  const [deleteConfirmType, setDeleteConfirmType] = useState<string | null>(null);
   const currentMap = maps.find(m => m.id === currentMapId);
-
-  const TypeIconComponent = ({ iconName, className, style }: { iconName: string; className?: string; style?: React.CSSProperties }) => {
-    const LucideIcon = (icons as Record<string, React.ComponentType<{ className?: string; style?: React.CSSProperties }>>)[iconName];
-    if (LucideIcon) return <LucideIcon className={className} style={style} />;
-    return null;
-  };
-
-  const handleAddType = () => {
-    if (newTypeName.trim() && onAddMarkerType) {
-      onAddMarkerType(newTypeName.trim(), newTypeColor, newTypeIcon);
-      setNewTypeName('');
-      setNewTypeColor('#3b82f6');
-      setNewTypeIcon('MapPin');
-      setShowAddType(false);
-    }
-  };
-
-  const handleDeleteType = (typeId: string) => {
-    if (deleteConfirmType === typeId) {
-      if (onDeleteMarkerType) onDeleteMarkerType(typeId);
-      setDeleteConfirmType(null);
-    } else {
-      setDeleteConfirmType(typeId);
-      setTimeout(() => setDeleteConfirmType(null), 3000);
-    }
-  };
 
   const handleDeleteMap = (mapId: string) => {
     if (deleteConfirmId === mapId) {
@@ -627,110 +581,6 @@ export function Toolbar({ mode, skin, markerTypes, onModeChange, onSkinChange, o
           </div>
         )}
 
-        <div className={`rounded-xl p-3 border transition-all duration-500 ${
-          skin === 'skin2' ? 'bg-[#1a1a2e]/30 border-[#1a1a2e]/30' : 'bg-military-900/50 border-military-700/20'
-        }`}>
-          <div className="flex items-center justify-between mb-2">
-            <label className={`block text-xs font-medium ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'}`}>标记统计</label>
-            {onAddMarkerType && (
-              <button
-                onClick={() => setShowAddType(!showAddType)}
-                className={`p-1 rounded transition-all duration-300 ${
-                  skin === 'skin2' ? 'text-[#00f5ff] hover:bg-[#1a1a2e]' : 'text-blue-400 hover:bg-military-700/50'
-                }`}
-                title="添加类型"
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
-          <div className="space-y-1">
-            {markerTypes.map((mt) => {
-              const count = markers.filter((m) => m.type === mt.id).length;
-              return (
-                <div key={mt.id} className={`flex items-center justify-between px-2 py-1.5 rounded-lg transition-all duration-300 group ${
-                  skin === 'skin2' ? 'hover:bg-[#1a1a2e]/50' : 'hover:bg-military-700/30'
-                }`}>
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: mt.color }} />
-                    <span className={`text-xs ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'}`}>{mt.name}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className={`text-xs font-bold tabular-nums ${skin === 'skin2' ? 'text-white' : 'text-military-300'}`}>{count}</span>
-                    {!mt.builtin && onDeleteMarkerType && (
-                      <button
-                        onClick={() => handleDeleteType(mt.id)}
-                        className={`p-0.5 rounded transition-all opacity-0 group-hover:opacity-100 ${
-                          deleteConfirmType === mt.id
-                            ? 'text-red-500'
-                            : skin === 'skin2' ? 'text-[#8888aa] hover:text-red-400' : 'text-military-500 hover:text-red-400'
-                        }`}
-                        title={deleteConfirmType === mt.id ? '再次点击确认删除' : '删除类型'}
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {showAddType && (
-            <div className={`mt-2 p-2 rounded-lg border transition-all duration-500 ${
-              skin === 'skin2' ? 'bg-[#0a0a0f] border-[#1a1a2e]' : 'bg-military-900 border-military-700'
-            }`}>
-              <input
-                type="text"
-                value={newTypeName}
-                onChange={(e) => setNewTypeName(e.target.value)}
-                placeholder="类型名称"
-                className={`w-full rounded px-2 py-1 text-xs text-white focus:outline-none transition-all mb-1.5 ${
-                  skin === 'skin2'
-                    ? 'bg-[#12121a] border border-[#1a1a2e] focus:border-[#00f5ff] placeholder-[#444466]'
-                    : 'bg-military-800 border border-military-700 focus:border-military-500 placeholder-military-500'
-                }`}
-              />
-              <div className="flex items-center gap-2 mb-1.5">
-                <label className={`text-xs flex-shrink-0 ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'}`}>颜色</label>
-                <input type="color" value={newTypeColor} onChange={(e) => setNewTypeColor(e.target.value)} className="w-6 h-6 rounded cursor-pointer" />
-              </div>
-              <div className="mb-1.5">
-                <label className={`text-xs block mb-1 ${skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'}`}>图标</label>
-                <div className="grid grid-cols-8 gap-0.5">
-                  {AVAILABLE_ICONS.map((iconName) => (
-                    <button
-                      key={iconName}
-                      onClick={() => setNewTypeIcon(iconName)}
-                      className={`p-1 rounded transition-all ${
-                        newTypeIcon === iconName
-                          ? skin === 'skin2' ? 'bg-[#00f5ff]/20 text-[#00f5ff]' : 'bg-blue-600/20 text-blue-400'
-                          : skin === 'skin2' ? 'hover:bg-[#1a1a2e] text-[#8888aa]' : 'hover:bg-military-700 text-military-400'
-                      }`}
-                      title={iconName}
-                    >
-                      <TypeIconComponent iconName={iconName} className="w-3 h-3" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <button
-                onClick={handleAddType}
-                disabled={!newTypeName.trim()}
-                className={`w-full px-2 py-1 rounded text-white text-xs transition-all duration-300 disabled:cursor-not-allowed ${
-                  skin === 'skin2'
-                    ? 'bg-gradient-to-r from-[#00f5ff] to-[#0088aa] disabled:bg-[#1a1a2e]/50'
-                    : 'bg-blue-600 hover:bg-blue-500 disabled:bg-military-700'
-                }`}
-              >
-                确认添加
-              </button>
-            </div>
-          )}
-          {deleteConfirmType && (
-            <p className={`text-xs mt-1 ${skin === 'skin2' ? 'text-red-400' : 'text-red-400'}`}>再次点击删除确认</p>
-          )}
-        </div>
       </div>
 
       <div className={`p-4 border-t transition-all duration-500 ${

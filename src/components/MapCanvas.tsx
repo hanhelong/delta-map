@@ -48,6 +48,10 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
     };
   }, [mapData, mapDisplaySize]);
 
+  const getTypeCount = (typeId: string) => {
+    return markers.filter(m => m.type === typeId).length;
+  };
+
   const zoomBy = useCallback((factor: number) => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
@@ -438,6 +442,41 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
             </div>
           </div>
         )}
+
+        <div className={`absolute ${isMobile ? 'bottom-4 left-1/2 -translate-x-1/2' : 'bottom-6 left-1/2 -translate-x-1/2'} z-30 pointer-events-none`}>
+          <div className={`rounded-xl px-4 py-2.5 shadow-lg backdrop-blur-xl border transition-all duration-500 ${
+            skin === 'skin2' 
+              ? 'bg-[#12121a]/90 border-[#1a1a2e] skin2-legend-glow' 
+              : 'bg-military-800/90 border-military-600'
+          }`}>
+            <div className={`flex items-center gap-4 ${isMobile ? 'gap-3' : 'gap-5'}`}>
+              {markerTypes.map((mt) => {
+                const count = getTypeCount(mt.id);
+                return (
+                  <div key={mt.id} className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+                      style={{
+                        backgroundColor: mt.color,
+                        boxShadow: skin === 'skin2' ? `0 0 8px ${mt.color}` : 'none',
+                      }}
+                    />
+                    <span className={`text-xs font-medium whitespace-nowrap transition-all duration-500 ${
+                      skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-300'
+                    }`}>
+                      {mt.name}
+                      <span className={`ml-1 font-bold tabular-nums transition-all duration-500 ${
+                        skin === 'skin2' ? 'text-white' : 'text-military-200'
+                      }`}>
+                        {count}
+                      </span>
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

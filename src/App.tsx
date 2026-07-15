@@ -256,8 +256,6 @@ function MapApp() {
           onOpenGallery={handleOpenGallery}
           onClearData={handleClearData}
           onClearCache={handleClearCache}
-          onAddMarkerType={handleAddMarkerType}
-          onDeleteMarkerType={handleDeleteMarkerType}
           maps={maps}
           currentMapId={currentMapId}
           onSwitchMap={handleSwitchMap}
@@ -321,8 +319,6 @@ function MapApp() {
           onOpenGallery={handleOpenGallery}
           onClearData={handleClearData}
           onClearCache={handleClearCache}
-          onAddMarkerType={handleAddMarkerType}
-          onDeleteMarkerType={handleDeleteMarkerType}
           maps={maps}
           currentMapId={currentMapId}
           onSwitchMap={handleSwitchMap}
