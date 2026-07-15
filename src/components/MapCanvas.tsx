@@ -1,7 +1,7 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import type { MapData, Marker, MarkerType, Mode, Skin } from '@/types';
 import { MarkerPoint } from './MarkerPoint';
-import { ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
+import { ZoomIn, ZoomOut, Maximize2, Eye, EyeOff } from 'lucide-react';
 
 interface MapCanvasProps {
   mapData: MapData | null;
@@ -27,6 +27,8 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
   const [mapDisplaySize, setMapDisplaySize] = useState({ width: 0, height: 0 });
   const [hasDragged, setHasDragged] = useState(false);
   const [minScale, setMinScale] = useState(1);
+  const [hiddenTypes, setHiddenTypes] = useState<Set<string>>(new Set());
+  const [showLegendPanel, setShowLegendPanel] = useState(false);
 
   const clampPosition = useCallback((x: number, y: number, currentScale: number) => {
     if (!containerRef.current || !mapData) return { x, y };
@@ -51,6 +53,30 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
   const getTypeCount = (typeId: string) => {
     return markers.filter(m => m.type === typeId).length;
   };
+
+  // 获取当前地图中存在的标记类型
+  const getMapMarkerTypes = () => {
+    const typeIds = new Set(markers.map(m => m.type));
+    return markerTypes.filter(mt => typeIds.has(mt.id));
+  };
+
+  const mapMarkerTypes = getMapMarkerTypes();
+
+  // 切换标记类型的显示/隐藏
+  const toggleTypeVisibility = (typeId: string) => {
+    setHiddenTypes(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(typeId)) {
+        newSet.delete(typeId);
+      } else {
+        newSet.add(typeId);
+      }
+      return newSet;
+    });
+  };
+
+  // 过滤要显示的标记点
+  const visibleMarkers = markers.filter(m => !hiddenTypes.has(m.type));
 
   const zoomBy = useCallback((factor: number) => {
     if (!containerRef.current) return;
@@ -227,11 +253,15 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
 
   const handleCanvasClick = useCallback((e: React.MouseEvent) => {
     if (!mapData || !containerRef.current || hasDragged) return;
-    
+
+    // 检查是否点击了标记点，如果是则不添加新标记
+    const target = e.target as HTMLElement;
+    if (target.closest('[data-marker-point]')) return;
+
     const rect = containerRef.current.getBoundingClientRect();
     const x = ((e.clientX - rect.left - position.x) / scale / mapDisplaySize.width) * 100;
     const y = ((e.clientY - rect.top - position.y) / scale / mapDisplaySize.height) * 100;
-    
+
     if (mode === 'edit' && x >= 0 && x <= 100 && y >= 0 && y <= 100) {
       onMapClick(x, y);
     }
@@ -335,7 +365,7 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
             draggable={false}
           />
           <div className="absolute inset-0">
-            {markers.map((marker) => (
+            {visibleMarkers.map((marker) => (
               <MarkerPoint
                 key={marker.id}
                 marker={marker}
@@ -445,20 +475,21 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
 
         <div className={`absolute ${isMobile ? 'bottom-4 left-1/2 -translate-x-1/2' : 'bottom-6 left-1/2 -translate-x-1/2'} z-30 pointer-events-none`}>
           <div className={`rounded-xl px-4 py-2.5 shadow-lg backdrop-blur-xl border transition-all duration-500 ${
-            skin === 'skin2' 
-              ? 'bg-[#12121a]/90 border-[#1a1a2e] skin2-legend-glow' 
+            skin === 'skin2'
+              ? 'bg-[#12121a]/90 border-[#1a1a2e] skin2-legend-glow'
               : 'bg-military-800/90 border-military-600'
           }`}>
             <div className={`flex items-center gap-4 ${isMobile ? 'gap-3' : 'gap-5'}`}>
-              {markerTypes.map((mt) => {
+              {mapMarkerTypes.map((mt) => {
                 const count = getTypeCount(mt.id);
+                const isVisible = !hiddenTypes.has(mt.id);
                 return (
-                  <div key={mt.id} className="flex items-center gap-2">
+                  <div key={mt.id} className={`flex items-center gap-2 transition-all duration-300 ${!isVisible ? 'opacity-40' : ''}`}>
                     <span
                       className="w-2.5 h-2.5 rounded-full flex-shrink-0"
                       style={{
                         backgroundColor: mt.color,
-                        boxShadow: skin === 'skin2' ? `0 0 8px ${mt.color}` : 'none',
+                        boxShadow: skin === 'skin2' && isVisible ? `0 0 8px ${mt.color}` : 'none',
                       }}
                     />
                     <span className={`text-xs font-medium whitespace-nowrap transition-all duration-500 ${
@@ -477,6 +508,86 @@ export function MapCanvas({ mapData, markers, mode, skin, markerTypes, onMarkerC
             </div>
           </div>
         </div>
+
+        {/* 右下角图例显示/隐藏控制 */}
+        {mapMarkerTypes.length > 0 && (
+          <div className={`absolute ${isMobile ? 'right-2 top-16' : 'right-4 top-4'} z-30`}>
+            <button
+              onClick={(e) => { e.stopPropagation(); setShowLegendPanel(!showLegendPanel); }}
+              className={`p-2 rounded-lg backdrop-blur-xl border transition-all duration-300 ${
+                skin === 'skin2'
+                  ? 'bg-[#12121a]/90 border-[#1a1a2e] text-[#00f5ff] hover:bg-[#1a1a2e]'
+                  : 'bg-military-800/90 border-military-600 text-military-300 hover:bg-military-700'
+              }`}
+              title="图例控制"
+            >
+              {showLegendPanel ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+            </button>
+
+            {showLegendPanel && (
+              <div className={`absolute top-full right-0 mt-2 rounded-xl overflow-hidden backdrop-blur-xl border transition-all duration-300 animate-scale-in ${
+                skin === 'skin2'
+                  ? 'bg-[#12121a]/95 border-[#1a1a2e]'
+                  : 'bg-military-800/95 border-military-600'
+              }`} style={{ minWidth: '140px' }}>
+                <div className={`px-3 py-2 border-b transition-all duration-500 ${
+                  skin === 'skin2' ? 'border-[#1a1a2e]' : 'border-military-700'
+                }`}>
+                  <span className={`text-xs font-medium transition-all duration-500 ${
+                    skin === 'skin2' ? 'text-[#8888aa]' : 'text-military-400'
+                  }`}>显示/隐藏点位</span>
+                </div>
+                <div className="p-2">
+                  {mapMarkerTypes.map((mt) => {
+                    const isVisible = !hiddenTypes.has(mt.id);
+                    const count = getTypeCount(mt.id);
+                    return (
+                      <button
+                        key={mt.id}
+                        onClick={(e) => { e.stopPropagation(); toggleTypeVisibility(mt.id); }}
+                        className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-300 ${
+                          skin === 'skin2' ? 'hover:bg-[#1a1a2e]' : 'hover:bg-military-700'
+                        }`}
+                      >
+                        <span
+                          className="w-2.5 h-2.5 rounded-full flex-shrink-0 transition-all duration-300"
+                          style={{
+                            backgroundColor: isVisible ? mt.color : '#444',
+                            boxShadow: isVisible && skin === 'skin2' ? `0 0 6px ${mt.color}` : 'none',
+                            opacity: isVisible ? 1 : 0.5,
+                          }}
+                        />
+                        <span className={`text-xs flex-1 text-left transition-all duration-300 ${
+                          skin === 'skin2'
+                            ? isVisible ? 'text-[#8888aa]' : 'text-[#444466]'
+                            : isVisible ? 'text-military-300' : 'text-military-600'
+                        }`}>
+                          {mt.name}
+                        </span>
+                        <span className={`text-xs font-bold tabular-nums transition-all duration-300 ${
+                          skin === 'skin2'
+                            ? isVisible ? 'text-white' : 'text-[#444466]'
+                            : isVisible ? 'text-military-200' : 'text-military-600'
+                        }`}>
+                          {count}
+                        </span>
+                        {isVisible ? (
+                          <Eye className={`w-3.5 h-3.5 transition-all duration-300 ${
+                            skin === 'skin2' ? 'text-[#00f5ff]' : 'text-blue-400'
+                          }`} />
+                        ) : (
+                          <EyeOff className={`w-3.5 h-3.5 transition-all duration-300 ${
+                            skin === 'skin2' ? 'text-[#444466]' : 'text-military-600'
+                          }`} />
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

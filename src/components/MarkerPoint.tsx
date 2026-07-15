@@ -40,6 +40,7 @@ export function MarkerPoint({ marker, markerTypes, onClick, isEditMode, skin = '
 
   return (
     <div
+      data-marker-point
       className="absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-all duration-300 hover:scale-125 active:scale-95 animate-pulse"
       style={{
         left: `${marker.x}%`,
